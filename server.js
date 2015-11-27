@@ -25,9 +25,24 @@ app.get('/', function (req, res) {
 app.get('/todos', function (req, res) {
 	//
 	res.json(todos);
-})
+});
 
 // GET /todos/:id
+app.get('/todos/:id', function (req, res) {
+	//
+	var todoId = req.params.id;
+	console.log('todoId = ' + todoId);
+	var i = 0;
+	while (i < todos.length && todos[i].id.toString() !== todoId) {
+		i++;
+	}
+	if (i !== todos.length) {
+		res.json(todos[i]);
+	} else {
+		res.status(404).send();
+	}
+	//res.send('get ID = ' + req.params.id);
+});
 
 app.listen(PORT, function () {
 	//
