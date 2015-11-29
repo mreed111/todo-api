@@ -18,7 +18,6 @@ app.get('/todos', function (req, res) {
 	var queryParams = req.query;
 	var filteredTodos = todos;
 	
-	console.log(queryParams);
 	if (queryParams.hasOwnProperty('completed')) {
 		if (queryParams.completed === 'true') {
 			queryParams.completed = true;
@@ -28,6 +27,16 @@ app.get('/todos', function (req, res) {
 			return res.status(400).json({ status: 400, message: 'invalid \'completed\' status'});
 		}
 		filteredTodos = _.where(filteredTodos, {completed: queryParams.completed});
+	}
+	
+	if (queryParams.hasOwnProperty('q')  && queryParams.q.trim().length > 0) {
+		filteredTodos = _.filter(filteredTodos, function(todo) {
+			if (todo.description.toLowerCase.indexOf(queryParams.q.toLowerCase) > -1) {
+				return true;
+			} else {
+				return false;
+			}
+		});
 	}
 	
 	res.json(filteredTodos);
