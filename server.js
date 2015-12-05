@@ -11,15 +11,15 @@ var todoNextId = 1;
 
 app.use(bodyParser.json());
 
-app.get('/', function(req, res) {
+app.get('/', function (req, res) {
 	res.send('Todo API Root');
 });
 
 // GET /todos?completed=false&q=work
-app.get('/todos', function(req, res) {
+app.get('/todos', function (req, res) {
 	var query = req.query;
 	var where = {};
-	
+
 	if (query.hasOwnProperty('completed')) {
 		if (query.completed === 'true') {
 			where.completed = true;
@@ -29,25 +29,25 @@ app.get('/todos', function(req, res) {
 	}
 	if (query.hasOwnProperty('q') && query.q.length > 0) {
 		where.description = {
-			$like: '%'+query.q+'%'
+			$like: '%' + query.q + '%'
 		}
 	}
-	
-	db.todo.findAll({where: where}).then(function(todos) {
+
+	db.todo.findAll({ where: where }).then(function (todos) {
 		//if (todos.length > 0) {
-			res.json(todos);
+		res.json(todos);
 		//} else {
 		//	res.status(404).send();
 		//}
-	}, function(e) {
+	}, function (e) {
 		res.status(500).send();
 	});
 });
 
 // GET /todos/:id
-app.get('/todos/:id', function(req, res) {
+app.get('/todos/:id', function (req, res) {
 	var todoId = parseInt(req.params.id, 10);
-	
+
 	db.todo.findById(todoId).then(function (todo) {
 		if (!!todo) {
 			res.json(todo.toJSON());
@@ -60,7 +60,7 @@ app.get('/todos/:id', function(req, res) {
 });
 
 // POST /todos
-app.post('/todos', function(req, res) {
+app.post('/todos', function (req, res) {
 	var body = _.pick(req.body, 'description', 'completed');
 
 	db.todo.create(body).then(function (todo) {
@@ -71,9 +71,9 @@ app.post('/todos', function(req, res) {
 });
 
 // DELETE /todos/:id
-app.delete('/todos/:id', function(req, res) {
+app.delete('/todos/:id', function (req, res) {
 	var todoId = parseInt(req.params.id, 10);
-	
+
 	db.todo.destroy({
 		where: {
 			id: todoId
@@ -92,18 +92,18 @@ app.delete('/todos/:id', function(req, res) {
 });
 
 // PUT /todos/:id
-app.put('/todos/:id', function(req, res) {
+app.put('/todos/:id', function (req, res) {
 	var todoId = parseInt(req.params.id, 10);
 	var body = _.pick(req.body, 'description', 'completed');
 	var attributes = {};
 
 	if (body.hasOwnProperty('completed')) {
 		attributes.completed = body.completed;
-	} 
+	}
 
 	if (body.hasOwnProperty('description')) {
 		attributes.description = body.description;
-	} 
+	}
 
 	db.todo.findById(todoId).then(function (todo) {
 		// promise resolved...
@@ -126,9 +126,9 @@ app.put('/todos/:id', function(req, res) {
 
 
 // POST /users
-app.post('/users', function(req, res) {
+app.post('/users', function (req, res) {
 	var body = _.pick(req.body, 'email', 'password');
-	
+
 	db.user.create(body).then(function (user) {
 		res.json(user.toPublicJSON());
 	}, function (e) {
@@ -138,20 +138,28 @@ app.post('/users', function(req, res) {
 
 
 // POST /users/login
-app.post('/users/login', function(req, res) {
+app.post('/users/login', function (req, res) {
 	var body = _.pick(req.body, 'email', 'password');
-	
+
 	db.user.authenticate(body).then(function (user) {
 		//console.log('User email ...' + body.email);
-		res.json(user.toPublicJSON());
+		//console.log('... user = ' + user.toPublicJSON());
+		//console.log('... user auth: ' + user.generateToken('authentication'));
+		var myToken = user.generateToken('authentication');
+		if (myToken) {
+			res.header('Auth', myToken).json(user.toPublicJSON());
+		} else {
+			res.status(401).send();
+		}
 	}, function (e) {
+		console.error(e);
 		res.status(401).send();
 	});
 });
 
 
-db.sequelize.sync({force: true}).then(function() {
-	app.listen(PORT, function() {
+db.sequelize.sync({ force: true }).then(function () {
+	app.listen(PORT, function () {
 		console.log('Express listening on port ' + PORT + '!');
 	});
 });
